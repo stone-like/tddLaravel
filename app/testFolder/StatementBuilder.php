@@ -4,13 +4,13 @@
 namespace App\testFolder;
 
 
-class Statement
+class StatementBuilder
 {
     public $invoice;
     public $plays;
 
     /**
-     * Statement constructor.
+     * StatementRender constructor.
      */
     public function __construct($invoice, $plays)
     {
@@ -18,38 +18,19 @@ class Statement
         $this->plays = $plays;
     }
 
-    public function statement()
-    {
-         return $this->renderPlainText($this->createStatementData($this->invoice,$this->plays));
-    }
 
-    public function createStatementData($invoice,$plays){
+    public function createStatementData(){
         $statementData = [];
-        $statementData["customer"] = $invoice["customer"];
+        $statementData["customer"] = $this->invoice["customer"];
 
         $statementData["performances"] = array_map(function ($performance) {
             return $this->enrichPerformance($performance);
-        }, $invoice["performances"]);
+        }, $this->invoice["performances"]);
         $statementData["totalAmount"] = $this->totalAmount($statementData);
         $statementData["totalVolumeCredits"] = $this->totalVolumeCredits($statementData);
 
 
-        return $this->renderPlainText($statementData);
-    }
-
-    public function renderPlainText($data)
-    {
-        $result = "Statement for " . $data["customer"] . "\n";
-
-        foreach ($data["performances"] as $perf) {
-
-            $result .= $perf["play"]["name"] . ": " . $perf["amount"] . " (${perf["audience"]} seats)\n";
-
-
-        };
-        $result .= "Amount owed is " . $data["totalAmount"] . "\n";
-        $result .= "You earned " . $data["totalVolumeCredits"] . " credits\n";
-        return $result;
+        return $statementData;
     }
 
     public function enrichPerformance($performance)

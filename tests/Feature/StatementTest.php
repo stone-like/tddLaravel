@@ -2,7 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\testFolder\Statement;
+use App\testFolder\StatementRender;
+use App\testFolder\StatementBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -13,6 +14,7 @@ class StatementTest extends TestCase
     private $plays;
     private $statement;
     private $expected;
+    private $htmlExpected;
 
     protected function setUp(): void
     {
@@ -51,7 +53,14 @@ class StatementTest extends TestCase
                     "type" => "tragedy"
                 ]
             ];
-        $this->expected = "Statement for bingo
+        $this->expected = "StatementRender for bingo
+Hamlet: 65000 (55 seats)
+as you like it: 49000 (35 seats)
+Othello: 50000 (40 seats)
+Amount owed is 164000
+You earned 47 credits
+";
+        $this->htmlExpected = "<h1>StatementRender for bingo</h1>
 Hamlet: 65000 (55 seats)
 as you like it: 49000 (35 seats)
 Othello: 50000 (40 seats)
@@ -65,8 +74,17 @@ You earned 47 credits
     public function it_equals_expected()
     {
 
-        $statement = new Statement($this->invoice, $this->plays);
+        $statement = new StatementRender(new StatementBuilder($this->invoice, $this->plays));
         $res = $statement->statement();
         $this->assertEquals($this->expected,$res);
+    }
+
+    /** @test */
+    public function html_equals_expected()
+    {
+
+        $statement = new StatementRender(new StatementBuilder($this->invoice, $this->plays));
+        $res = $statement->htmlstatement();
+        $this->assertEquals($this->htmlExpected,$res);
     }
 }
