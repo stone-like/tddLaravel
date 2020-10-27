@@ -6,58 +6,149 @@ namespace App\testFolder;
 
 class Statement
 {
+    public $invoice;
+    public $plays;
 
-    public static function statement($invoice,$plays){
-        $totalAmount = 0;
-        $volumeCredits = 0;
-        $result = "Statement for ${invoice["customer"]}\n";
+    /**
+     * Statement constructor.
+     */
+    public function __construct($invoice, $plays)
+    {
+        $this->invoice = $invoice;
+        $this->plays = $plays;
+    }
 
-        foreach($invoice["performances"] as $perf){
-            $play = $plays[$perf["playID"]];
+    public function statement()
+    {
+         return $this->renderPlainText($this->createStatementData($this->invoice,$this->plays));
+    }
 
-            $thisAmount = self::amoutFor($play, $perf);
+    public function createStatementData($invoice,$plays){
+        $statementData = [];
+        $statementData["customer"] = $invoice["customer"];
 
-            $volumeCredits += max($perf["audience"] - 30,0);
+        $statementData["performances"] = array_map(function ($performance) {
+            return $this->enrichPerformance($performance);
+        }, $invoice["performances"]);
+        $statementData["totalAmount"] = $this->totalAmount($statementData);
+        $statementData["totalVolumeCredits"] = $this->totalVolumeCredits($statementData);
 
-            if("comedy" === $play["type"]) $volumeCredits += floor($perf["audience"] /5);
 
+        return $this->renderPlainText($statementData);
+    }
 
-            $result .= "${play["name"]}: ${thisAmount} (${perf["audience"]} seats)\n";
-            $totalAmount += $thisAmount;
+    public function renderPlainText($data)
+    {
+        $result = "Statement for " . $data["customer"] . "\n";
+
+        foreach ($data["performances"] as $perf) {
+
+            $result .= $perf["play"]["name"] . ": " . $perf["amount"] . " (${perf["audience"]} seats)\n";
+
 
         };
-
-        $result .= "Amount owed is ${totalAmount}\n";
-        $result .= "You earned ${volumeCredits} credits\n";
+        $result .= "Amount owed is " . $data["totalAmount"] . "\n";
+        $result .= "You earned " . $data["totalVolumeCredits"] . " credits\n";
         return $result;
     }
+
+    public function enrichPerformance($performance)
+    {
+        $result = $performance;
+        $result["play"] = $this->playFor($result);
+        $result["amount"] = $this->amoutFor($result);
+        $result["volumeCredits"] = $this->volumeCreditsFor($result);
+        return $result;
+    }
+
 
     /**
      * @param $play
      * @param $perf
      * @return float|int
      */
-    public static function amoutFor($play, $perf)
+    public function amoutFor($performance)
     {
-        switch ($play["type"]) {
+
+        switch ($performance["play"]["type"]) {
             case "tragedy":
                 $result = 40000;
-                if ($perf > 30) {
-                    $result += 1000 * ($perf["audience"] - 30);
+                if ($performance["audience"] > 30) {
+                    $result += 1000 * ($performance["audience"] - 30);
                 }
                 break;
             case "comedy":
                 $result = 30000;
-                if ($perf["audience"] > 20) {
-                    $result += 1000 + 500 * ($perf["audience"] - 20);
+                if ($performance["audience"] > 20) {
+                    $result += 1000 + 500 * ($performance["audience"] - 20);
                 }
-                $result += 300 * $perf["audience"];
+                $result += 300 * $performance["audience"];
                 break;
             default:
                 throw new Exception("unknown type: ${
-                     $play}");
+                     $performance}");
 
         }
+        return $result;
+    }
+
+    /**
+     * @param $plays
+     * @param $perf
+     * @return mixed
+     */
+    public function playFor($perf)
+    {
+
+        return $this->plays[$perf["playID"]];
+    }
+
+    /**
+     * @param $perf
+     * @param $volumeCredits
+     * @param $plays
+     * @return false|float|mixed
+     */
+    public function volumeCreditsFor($performance)
+    {
+        $result = 0;
+        $result += max($performance["audience"] - 30, 0);
+
+        if ("comedy" === $performance["play"]["type"]) $result += floor($performance["audience"] / 5);
+        return $result;
+    }
+
+    /**
+     * @param $invoice
+     * @param $plays
+     * @return false|float|int|mixed
+     */
+    public function totalVolumeCredits($data)
+    {
+        $volumeCredits = 0;
+        foreach ($data["performances"] as $perf) {
+
+
+            $volumeCredits += $perf["volumeCredits"];
+
+        };
+        return $volumeCredits;
+    }
+
+    /**
+     * @param $invoice
+     * @param $plays
+     * @return int
+     */
+    public function totalAmount($data): int
+    {
+
+        $result = 0;
+        foreach ($data["performances"] as $perf) {
+
+            $result += $perf["amount"];
+
+        };
         return $result;
     }
 }

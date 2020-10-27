@@ -65,7 +65,8 @@ You earned 47 credits
     public function it_equals_expected()
     {
 
-        $res = Statement::statement($this->invoice, $this->plays);
+        $statement = new Statement($this->invoice, $this->plays);
+        $res = $statement->statement();
         $this->assertEquals($this->expected,$res);
     }
 }
