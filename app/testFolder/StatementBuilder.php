@@ -35,43 +35,23 @@ class StatementBuilder
 
     public function enrichPerformance($performance)
     {
+        $calcurator = $this->createPerformanceCalculator($performance,$this->playFor($performance));
         $result = $performance;
-        $result["play"] = $this->playFor($result);
-        $result["amount"] = $this->amoutFor($result);
-        $result["volumeCredits"] = $this->volumeCreditsFor($result);
+        $result["play"] = $calcurator->play;
+        $result["amount"] = $calcurator->amount();
+        $result["volumeCredits"] = $calcurator->volumeCredits();
         return $result;
     }
 
-
-    /**
-     * @param $play
-     * @param $perf
-     * @return float|int
-     */
-    public function amoutFor($performance)
-    {
-
-        switch ($performance["play"]["type"]) {
-            case "tragedy":
-                $result = 40000;
-                if ($performance["audience"] > 30) {
-                    $result += 1000 * ($performance["audience"] - 30);
-                }
-                break;
-            case "comedy":
-                $result = 30000;
-                if ($performance["audience"] > 20) {
-                    $result += 1000 + 500 * ($performance["audience"] - 20);
-                }
-                $result += 300 * $performance["audience"];
-                break;
+    public function createPerformanceCalculator($performance,$play){
+        switch($play["type"]){
+            case "tragedy": return new TragedyCalculator($performance,$play);
+            case "comedy": return new ComedyCalculator($performance,$play);
             default:
-                throw new Exception("unknown type: ${
-                     $performance}");
-
+                throw new \Exception("unknown performance: ${play["performance"]}");
         }
-        return $result;
     }
+
 
     /**
      * @param $plays
@@ -84,20 +64,7 @@ class StatementBuilder
         return $this->plays[$perf["playID"]];
     }
 
-    /**
-     * @param $perf
-     * @param $volumeCredits
-     * @param $plays
-     * @return false|float|mixed
-     */
-    public function volumeCreditsFor($performance)
-    {
-        $result = 0;
-        $result += max($performance["audience"] - 30, 0);
 
-        if ("comedy" === $performance["play"]["type"]) $result += floor($performance["audience"] / 5);
-        return $result;
-    }
 
     /**
      * @param $invoice

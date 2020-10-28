@@ -76,7 +76,7 @@ You earned 47 credits
 
         $statement = new StatementRender(new StatementBuilder($this->invoice, $this->plays));
         $res = $statement->statement();
-        $this->assertEquals($this->expected,$res);
+        $this->assertEquals($this->expected, $res);
     }
 
     /** @test */
@@ -85,6 +85,79 @@ You earned 47 credits
 
         $statement = new StatementRender(new StatementBuilder($this->invoice, $this->plays));
         $res = $statement->htmlstatement();
-        $this->assertEquals($this->htmlExpected,$res);
+        $this->assertEquals($this->htmlExpected, $res);
+    }
+
+    /** @test */
+    public function builder_emit_correct_dara()
+    {
+
+        $builder = new StatementBuilder($this->invoice, $this->plays);
+        $expected = [
+            'customer' =>
+                "bingo",
+            'performances' =>
+                [
+                    [
+                        'playID' =>
+                            "hamlet",
+                        'audience' =>
+                            55,
+                        'play' =>
+                            [
+                                'name' =>
+                                    "Hamlet",
+                                'type' =>
+                                    "tragedy"
+                            ],
+                        'amount' =>
+                            65000,
+                        'volumeCredits' =>
+                            25
+                    ],
+                    [
+                        'playID' =>
+                            "asLike",
+                        'audience' =>
+                            35,
+                        'play' =>
+                            [
+                                'name' =>
+                                    "as you like it",
+                                'type' =>
+                                    "comedy",
+                            ],
+                        'amount' =>
+                            49000,
+                        'volumeCredits' =>
+                            12
+                    ],
+                    [
+                        'playID' =>
+                            "othe",
+                        'audience' =>
+                            40,
+                        'play' =>
+                            [
+                                'name' =>
+                                    "Othello",
+                                'type' =>
+                                    "tragedy"
+                            ],
+                        'amount' =>
+                            50000,
+                        'volumeCredits' =>
+                            10
+                    ]
+                ],
+            'totalAmount' =>
+                164000,
+            'totalVolumeCredits' =>
+                47
+        ];
+
+        $this->assertEquals($expected,$builder->createStatementData());
+
+
     }
 }
